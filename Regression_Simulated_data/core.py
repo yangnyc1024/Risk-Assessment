@@ -30,68 +30,6 @@ from xgboost import XGBRegressor
 from matplotlib.lines import Line2D
 
 
-## Model options
-
-def naive(X,Y,X1):
-    ## fixed intercept model 
-    y_predict = np.repeat(np.mean(Y),len(X1))
-    return y_predict
-
-def linear_regression(X,Y,X1):
-    reg = LinearRegression().fit(X, Y)
-    return reg.predict(X1)
-
-def polynomial_regression(X,Y,X1):
-    poly_features = PolynomialFeatures(degree = 5)
-    X_poly = poly_features.fit_transform(X)
-    X1_poly = poly_features.fit_transform(X1)
-    reg = LinearRegression().fit(X_poly,Y)
-    return reg.predict(X1_poly)
-
-def knn(X, Y, X1):
-    reg = neighbors.KNeighborsRegressor(5)
-    return reg.fit(X, Y).predict(X1)
-
-def support_vector(X,Y,X1):
-    svr_rbf = svm.SVR(kernel = "rbf", C = 100, gamma = 0.1)
-    svr_rbf.fit(X, Y)
-    return svr_rbf.predict(X1)
-
-def random_forest(X, Y, X1, ntree = 250, max_depth = 7):
-    rf = RandomForestRegressor(n_estimators = ntree, max_depth = max_depth, criterion='absolute_error').fit(X,Y)
-    return rf.predict(X1)
-
-def gpr(X, Y, X1):
-    kernel = RationalQuadratic(alpha = 1.0, length_scale = 1.0)
-    gp = GaussianProcessRegressor(kernel = kernel, n_restarts_optimizer = 10)
-    gp.fit(X,Y)
-    return gp.predict(X1)
-
-
-def xgb(X, Y, X1, n_est = 500, lr = 0.01, max_depth = 3):
-    xgb = XGBRegressor(n_estimators = n_est, learning_rate = lr, max_depth = max_depth)
-    xgb.fit(X, Y)
-    return xgb.predict(X1)
-
-
-def neural_network(X, Y, X1, lr = 0.01):
-    opt = Adam(learning_rate = lr)
-    early_stopping = EarlyStopping(monitor = 'val_loss', patience = 300, \
-                                    min_delta = 0.001, restore_best_weights=True)
-
-    model = Sequential()
-    model.add(Dense(100, activation = 'relu', input_dim = 2))
-    model.add(Dense(50, activation = 'relu'))
-    model.add(Dense(20, activation = 'relu'))
-    model.add(Dense(1, activation = 'relu'))
-    model.compile(optimizer = opt, loss = 'mse')
-    # fit model
-    model.fit(X, Y, 
-              epochs = 2000, 
-              validation_split = 0.25,
-              callbacks = [early_stopping],
-              verbose = 0)
-    return np.array(model.predict(X1)).flatten()
 
 ## Weighting functions for covariate shift
 
@@ -168,7 +106,6 @@ def generate_data_for_trials(ntrial, ntrain, ntotal, X_data, Y_data, bias = 0.0)
 
 
 def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
-    ## need to more about this
     
     n = len(Y) ## Num training data
     n1 = X1.shape[0] ## Num test data 
@@ -177,9 +114,7 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
     # Naive & jackknife/jack+/jackmm
     #################################
 
-    muh_vals = fit_muh_fun(X,Y,np.r_[X,X1]) 
-    # np.r_[X, X1] means that you are creating a new array by appending the array X1 right 
-    # after the array X along the first axis (which is usually the row axis in 2-dimensional arrays).
+    muh_vals = fit_muh_fun(X,Y,np.r_[X,X1])
     resids_naive = Y-muh_vals[:n]
     abs_resids_naive = np.abs(resids_naive)
     muh_vals_testpoint = muh_vals[n:]
@@ -333,7 +268,7 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
 
 
 def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial, bias, muh_fun_name, muh_fun, dataset = 'wine'):
-    # this is to generate predict interval
+    
     PDs_method_names = ['jackknife', 'jackknife+_sorted', 'jackknife+', 'CV+_sorted', 'CV+', 'split', 'split_sorted',\
                         'muh_vals_testpoint','muh_split_vals_testpoint', 'weights_split_train', 'weights_JAW_train', 'weights_split_test', 'weights_JAW_test']
     Res_method_names = ['jackknife', 'CV' ,'split']
@@ -361,7 +296,7 @@ def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial
             weights_full = get_w(X_full, bias).reshape(len(X_full))
         else: 
             weights_full = np.ones(len(X_full))
-        ## what is muh_fun here?
+        
         Res, PDs = compute_PDs(X, Y, X1, muh_fun, weights_full, bias)
             
         for method in PDs_method_names:
@@ -454,6 +389,9 @@ def prob_by_residuals(Res_itrial, tau_test_pt, method):
 
 
 def prob_by_pred_dists(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
+
+    ## this is to return the probability of how is the coverage
+    
     ## Find lower point
     idx_low = 0
     train_scores_lower = list(PDs_itrial[PDs_itrial['method'] == method]['lower' + str(test_pt)])
@@ -477,6 +415,8 @@ def prob_by_pred_dists(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
 
 
 def prob_interval_JAW(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
+
+    ## this is to return the probability
     
     if (method == 'jackknife+' or method == 'CV+'):
         weights_to_use = 'weights_JAW_'

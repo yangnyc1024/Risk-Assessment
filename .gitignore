@@ -1,0 +1,18 @@
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+
+# csv 
+*.csv
+
+# DS_store
+*.DS_store
+
+
+#.rtf
+*.rtf

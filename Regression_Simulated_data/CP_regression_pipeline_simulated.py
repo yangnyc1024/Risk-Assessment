@@ -13,11 +13,14 @@ if __name__ == "__main__":
     
     parser.add_argument('--dataset', type = str, default = 'simulated', help = 'Dataset for experiments.')
     parser.add_argument('--bias', type = float, default = 0.0, help ='Bias for covariate shift')
-    parser.add_argument('--sim_data_size', type = int, default = 1000, help = 'Only valid for simulated dataset.')
-    parser.add_argument('--muh_fun_name', type = str, default = 'random_forest', help = 'Mu (mean) function predictor.')
+    parser.add_argument('--sim_data_size', type = int, default = 200, help = 'Only valid for simulated dataset.')
+    # parser.add_argument('--muh_fun_name', type = str, default = 'random_forest', help = 'Mu (mean) function predictor.')
+    parser.add_argument('--muh_fun_name', type = str, default = 'linear_regression', help = 'Mu (mean) function predictor.')
+    # parser.add_argument('--muh_fun_name', type = str, default = 'neural_network', help = 'Mu (mean) function predictor.')
     parser.add_argument('--threshold_type', type = str, default = 'absolute', help = 'Indicator whether threshold is space invariant or not')
     parser.add_argument('--tau', type = float, default = 10.0, help = 'Indicator whether threshold is space invariant or not')
-    parser.add_argument('--ntrial', type = int, default = 100, help = 'Number of trials (experiment replicates) to complete.')
+    parser.add_argument('--ntrial', type = int, default = 20, help = 'Number of trials (experiment replicates) to complete.')
+
 
     args = parser.parse_args()
     dataset = args.dataset
@@ -132,7 +135,8 @@ if __name__ == "__main__":
     if (bias != 0.0):
         JAWS_methods = ['Jacknife+', 'Wt_Jacknife+', 'CV+', 'Wt_CV+', 'Split', 'Wt_Split']
     else:
-        JAWS_methods = ['Jacknife+', 'CV+', 'Split']
+        # JAWS_methods = ['Jacknife+', 'CV+', 'Split']
+        JAWS_methods = ['Jacknife+',  'Split']
     
     mean_coverage_by_trial = mean_coverage_by_trial[JAWS_methods]
     
