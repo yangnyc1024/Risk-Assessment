@@ -1,4 +1,4 @@
-# In doc: CP_regression_pipeline_simulated
+# Risk Assessment for regression
 
 ## To do list
 
@@ -13,18 +13,38 @@
 
 ## New Design Idea
 
-- Training(training folder)
-- generate interval？(cp method folder)
-- generate probability (invert cp method folder)
+### src_training
+
+- design for any training function
+- input: X(feature), Y()
+
+
+
+### src_cPrediction
+
+- 
+
+
+
+### src_assessment
+
+
+
 - experiment
   - graph function
 
 
+### experiement
 
 
 
 
-## Function: generate_data_for_trials
+
+## Previous Design in folder:  CP_regression_pipeline_simulated
+
+
+
+### Function: generate_data_for_trials
 
 - parameter:
   - training data set, bias
@@ -36,11 +56,11 @@
 - output: 
   - split data
 
-## Function: generate_scores_PD(generate interval)
+### Function: generate_scores_PD(generate interval)
 
 
 
-### Function: compute_PDS(different cp method for interval)
+#### Function: compute_PDS(different cp method for interval)
 
 - parameters:
   - dataset, method, weight?, bias(covariate shift)
@@ -55,13 +75,13 @@
 
 
 
-## Some unknown function
+### Some unknown function
 
 
 
 
 
-## Function: results_by_tau(generate score)
+### Function: results_by_tau(generate score)
 
 #### Function：generate_true_probs
 
@@ -79,7 +99,7 @@
 
 
 
-## post processing
+### post processing
 
 - put all probability into mean_coverage_by_trial
 - get related true_probability_fn
