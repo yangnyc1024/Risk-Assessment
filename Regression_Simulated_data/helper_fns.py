@@ -33,11 +33,12 @@ from matplotlib.lines import Line2D
 ## Model options
 
 def naive(X,Y,X1):
-    ## fixed intercept model 
+ 
     y_predict = np.repeat(np.mean(Y),len(X1))
     return y_predict
 
 def linear_regression(X,Y,X1):
+
     reg = LinearRegression().fit(X, Y)
     return reg.predict(X1)
 
@@ -135,6 +136,19 @@ def exponential_tilting_indices(x, bias = 1):
 ## Generating data and obtainings predictive distribution results
 
 def generate_data_for_trials(ntrial, ntrain, ntotal, X_data, Y_data, bias = 0.0):
+    """
+        feature engineer main function? 
+        to generate trial set (X, Y), and test set (X, Y)
+        Input: 
+            ntrial: how many trials we would like to repeat?
+            ntrain: how many training data points
+            ntotal: how many total data points
+            X_data: explanatory variable for training, for example, simulated_data.iloc[:, 0:2].values
+            Y_data: response valiable for training, for example, simulated_data.iloc[:, 2].values
+            bias: related to covariate shift
+        Output:
+            Y1 prediction result for given X1, dtypes: <class 'numpy.ndarray'>?
+    """
    
     X_by_trial = []
     Y_by_trial = []
@@ -168,7 +182,7 @@ def generate_data_for_trials(ntrial, ntrain, ntotal, X_data, Y_data, bias = 0.0)
 
 
 def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
-    ## need to more about this
+    ## cp method, to generate upper and lower bound??
     
     n = len(Y) ## Num training data
     n1 = X1.shape[0] ## Num test data 
@@ -193,7 +207,7 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
         resids_LOO[i] = Y[i] - muh_vals_LOO[0]
         muh_LOO_vals_testpoint[i] = muh_vals_LOO[1:]
     
-    abs_resids_LOO = np.abs(resids_LOO)
+    abs_resids_LOO = np.abs(resids_LOO) ## cp method?
     
     
     ###############################
@@ -333,7 +347,7 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
 
 
 def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial, bias, muh_fun_name, muh_fun, dataset = 'wine'):
-    # this is to generate predict interval
+    # this is the core function to combine all trials?
     PDs_method_names = ['jackknife', 'jackknife+_sorted', 'jackknife+', 'CV+_sorted', 'CV+', 'split', 'split_sorted',\
                         'muh_vals_testpoint','muh_split_vals_testpoint', 'weights_split_train', 'weights_JAW_train', 'weights_split_test', 'weights_JAW_test']
     Res_method_names = ['jackknife', 'CV' ,'split']
@@ -440,7 +454,7 @@ def generate_true_probs(ntrial, X1_by_trial, Y1_by_trial, PDs_data, threshold_ty
 
 
 def prob_by_residuals(Res_itrial, tau_test_pt, method):
-    
+    ## calculate the pobability?
     idx = 0
     scores = list(Res_itrial[Res_itrial['method']==method]['value'])
     n = len(scores)
@@ -454,6 +468,7 @@ def prob_by_residuals(Res_itrial, tau_test_pt, method):
 
 
 def prob_by_pred_dists(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
+    ## calculate the pobability?
     ## Find lower point
     idx_low = 0
     train_scores_lower = list(PDs_itrial[PDs_itrial['method'] == method]['lower' + str(test_pt)])
@@ -477,7 +492,7 @@ def prob_by_pred_dists(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
 
 
 def prob_interval_JAW(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
-    
+    ## calculate the pobability?
     if (method == 'jackknife+' or method == 'CV+'):
         weights_to_use = 'weights_JAW_'
     elif (method == 'split'):
@@ -572,7 +587,7 @@ def generate_prob_results_by_tau(method, PDs_itrial, Res_itrial, threshold_type,
 
 def results_by_tau(dataset_to_use, filler, muh_fun_name, ntrial, X1_by_trial, Y1_by_trial, PDs_data, Res_data, \
                    threshold_type, tau_to_use, sigma_eps = None):
-    
+
     if (dataset_to_use == 'simulated'):
         prob_true = generate_true_probs(ntrial, X1_by_trial, Y1_by_trial, PDs_data, \
                                         threshold_type, tau_to_use, sigma_eps)

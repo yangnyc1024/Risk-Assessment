@@ -30,14 +30,23 @@ from xgboost import XGBRegressor
 from matplotlib.lines import Line2D
 
 
-## Model options
+## Model options：
+
 
 def naive(X,Y,X1):
-    ## fixed intercept model 
     y_predict = np.repeat(np.mean(Y),len(X1))
     return y_predict
 
 def linear_regression(X,Y,X1):
+    """
+        Construcat prediction result for given test data set X1
+        Input: 
+        X: explanatory variable
+        Y: response valiable
+        X1: explanatory variable, dtypes: <class 'numpy.ndarray'>?
+        Output:
+        Y1 prediction result for given X1, dtypes: <class 'numpy.ndarray'>?
+    """
     reg = LinearRegression().fit(X, Y)
     return reg.predict(X1)
 
@@ -67,12 +76,10 @@ def gpr(X, Y, X1):
     gp.fit(X,Y)
     return gp.predict(X1)
 
-
 def xgb(X, Y, X1, n_est = 500, lr = 0.01, max_depth = 3):
     xgb = XGBRegressor(n_estimators = n_est, learning_rate = lr, max_depth = max_depth)
     xgb.fit(X, Y)
     return xgb.predict(X1)
-
 
 def neural_network(X, Y, X1, lr = 0.01):
     opt = Adam(learning_rate = lr)
@@ -92,3 +99,8 @@ def neural_network(X, Y, X1, lr = 0.01):
               callbacks = [early_stopping],
               verbose = 0)
     return np.array(model.predict(X1)).flatten()
+
+
+# file = './src/data/simulated_data.csv'
+# df = pd.read_csv(file)
+# print(df)
