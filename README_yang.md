@@ -2,12 +2,8 @@
 
 ## To do list
 
-- Function: generate_scores_PD is training？or it is for predefine interval?
-
-  - ​        \## what is muh_fun here? in generate_scores_PD, the parameter pass into the compute_PDS
-  - muh_fun: I think it is the algorithm we choose to use
-
-  
+- figure out stage 2& 3 input or output
+- understand Neeraj code training input and output?
 
 
 
@@ -44,7 +40,7 @@
 
 
 
-### Function: generate_data_for_trials
+### Function: generate_data_for_trials(Stage1: split data)
 
 - parameter:
   - training data set, bias
@@ -56,7 +52,7 @@
 - output: 
   - split data
 
-### Function: generate_scores_PD(generate interval)
+### Function: generate_scores_PD(Stage2: training + generate cp interval)
 
 
 
@@ -81,7 +77,7 @@
 
 
 
-### Function: results_by_tau(generate score)
+### Function: results_by_tau(Stage 3: generate score)
 
 #### Function：generate_true_probs
 

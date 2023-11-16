@@ -183,7 +183,18 @@ def generate_data_for_trials(ntrial, ntrain, ntotal, X_data, Y_data, bias = 0.0)
 
 def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
     ## cp method, to generate upper and lower bound??
-    
+    """
+        main function to generate conformal band
+        Input: 
+            X, Y: calibration set
+            X1: testing set
+            fit_muh_fun: what algorithm we are using
+            weights_full:??
+            bias: ??
+        Output:
+            generate the conformal prediction bands given by calibration set
+            then combine as upper, lower bound interval as data file     
+    """
     n = len(Y) ## Num training data
     n1 = X1.shape[0] ## Num test data 
 
@@ -348,6 +359,28 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
 
 def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial, bias, muh_fun_name, muh_fun, dataset = 'wine'):
     # this is the core function to combine all trials?
+    """
+        main function to generate predict interval upper and lower bound file
+        Input: 
+            ntrial: how many trails
+            X_by_trial, Y_by_trial: training set
+            X1_by_trial, Y1_by_trial: testing set
+            bias: covariate shift index
+            muh_fun_name: method name?
+            muh_fun: method offical name?
+        Output:
+            return
+            PDs_all, 
+            for example: 
+                itrial	dataset	     muh_fun	          method	testpoint	lower0	        lower1	            lower2	            lower3	            lower4	            lower5 , until how many calibration datapints? then upper1, upper2, .....
+                0	    simulated	linear_regression	jackknife	FALSE	10.710953915387800	14.870428174056500	33.37037760657300	22.425496315934100	30.04325716823870	41.944646807551400
+            Res_all,
+            for example:
+                itrial	    dataset	        muh_fun	method	        testpoint	          value
+                0	        simulated	linear_regression	jackknife	FALSE	0.02075643722899660
+
+            
+    """
     PDs_method_names = ['jackknife', 'jackknife+_sorted', 'jackknife+', 'CV+_sorted', 'CV+', 'split', 'split_sorted',\
                         'muh_vals_testpoint','muh_split_vals_testpoint', 'weights_split_train', 'weights_JAW_train', 'weights_split_test', 'weights_JAW_test']
     Res_method_names = ['jackknife', 'CV' ,'split']
@@ -375,7 +408,7 @@ def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial
             weights_full = get_w(X_full, bias).reshape(len(X_full))
         else: 
             weights_full = np.ones(len(X_full))
-        ## what is muh_fun here?
+########for each trial calculate the predict interval
         Res, PDs = compute_PDs(X, Y, X1, muh_fun, weights_full, bias)
             
         for method in PDs_method_names:
@@ -545,9 +578,19 @@ def prob_interval_JAW(PDs_itrial, y_pred_lower, y_pred_upper, test_pt, method):
     
     
 def generate_prob_results_by_tau(method, PDs_itrial, Res_itrial, threshold_type, tau_to_use):
-    
+    """
+        calculate probability for given predict interval & true probability
+        Input: 
+            method: cp method
+            PDs_itrial: dataframe with predict interval
+            Res_itrial: dataframe with true probability
+            threshold_type: type = str, default = 'absolute'& 'relative', help = 'Indicator whether threshold is space invariant or not'
+            tau_to_use: ??? type = float, default = 10.0, help = 'Indicator whether threshold is space invariant or not')
+        Output:
+        Y1 prediction result for given X1, dtypes: <class 'numpy.ndarray'>?
+    """
+    ## what is the n_test here?
     n_test = int(PDs_itrial.columns[-1].split('upper')[1]) + 1
-    
     probs = []
 
     for test_pt in range(0, n_test):
@@ -587,6 +630,25 @@ def generate_prob_results_by_tau(method, PDs_itrial, Res_itrial, threshold_type,
 
 def results_by_tau(dataset_to_use, filler, muh_fun_name, ntrial, X1_by_trial, Y1_by_trial, PDs_data, Res_data, \
                    threshold_type, tau_to_use, sigma_eps = None):
+## the main probability calculation function
+    """
+        Construct prediction result for given test data set X1
+        Input: 
+            dataset_to_use: here is the dataset , input like ???
+            filler:
+            muh_fun_name: machine learning method name
+            ntrial: how many trials? what is this for?
+            threshold_type: 
+                    for different calculate probabilty method?
+                    'absolute', help = 'Indicator whether threshold is space invariant or not'
+                    'relevant'
+            tau_to_use: 
+                    type = float, default = 10.0, help = 'Indicator whether threshold is space invariant or not')
+            PDs_data: with prediction interval data set
+            Res_data: with true probability data set
+        Output:
+            Null, only to generate the probability into file? which file????
+    """
 
     if (dataset_to_use == 'simulated'):
         prob_true = generate_true_probs(ntrial, X1_by_trial, Y1_by_trial, PDs_data, \
@@ -610,7 +672,7 @@ def results_by_tau(dataset_to_use, filler, muh_fun_name, ntrial, X1_by_trial, Y1
     for j in tqdm.tqdm(range(ntrial)):
         PDs_itrial = PDs_data[PDs_data['itrial'] == j]
         Res_itrial = Res_data[Res_data['itrial'] == j]
-        
+## main function to calculate the probability, named generate_prob_results_by_tau       
         for i in range(len(prob_methods)):
             eval(prob_methods[i] + '_probs').append(generate_prob_results_by_tau(prob_methods[i], PDs_itrial, Res_itrial, threshold_type, tau_to_use))
     

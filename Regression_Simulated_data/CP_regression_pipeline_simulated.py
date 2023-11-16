@@ -18,6 +18,7 @@ if __name__ == "__main__":
     # parser.add_argument('--muh_fun_name', type = str, default = 'random_forest', help = 'Mu (mean) function predictor.')
     parser.add_argument('--muh_fun_name', type = str, default = 'linear_regression', help = 'Mu (mean) function predictor.')
     # parser.add_argument('--muh_fun_name', type = str, default = 'neural_network', help = 'Mu (mean) function predictor.')
+## question 1? what are these three things?
     parser.add_argument('--threshold_type', type = str, default = 'absolute', help = 'Indicator whether threshold is space invariant or not')
     parser.add_argument('--tau', type = float, default = 10.0, help = 'Indicator whether threshold is space invariant or not')
     parser.add_argument('--ntrial', type = int, default = 20, help = 'Number of trials (experiment replicates) to complete.')
@@ -41,9 +42,7 @@ if __name__ == "__main__":
         simulated_data = pd.read_csv('0.Datasets/simulated/simulated_data.csv')
         simulated_data = simulated_data[0:sim_data_size]
         X_simulated = simulated_data.iloc[:, 0:2].values # this is all X!!!!!!
-        print(X_simulated)
-        Y_simulated = simulated_data.iloc[:, 2].values
-        print(Y_simulated)
+        Y_simulated = simulated_data.iloc[:, 2].values # this is only training Y???
         n_simulated = len(Y_simulated)
         print("X_simulated shape : ", X_simulated.shape)
         
@@ -73,14 +72,15 @@ if __name__ == "__main__":
         y_mean = scaler_y.mean_
     
     else:
-        X_scaled = eval('X_' + dataset)
+        X_scaled = eval('X_' + dataset) ###????
         Y_scaled = eval('Y_' + dataset)
 
-### function 1, to genereate training and test         
+### function 1, to genereate training and test 
+#   ## Question 1: direct put all data with X_scaled? and Y_scaled? but the simulation data has only X_1,X_2, and Y?      
     X_train, Y_train, X_test, Y_test = generate_data_for_trials(ntrial, n_train, n_total, X_scaled, Y_scaled, bias)
 
 
-### function 2, to get the cp interval
+### function 2, training + cp method stage: to get the cp interval
     # this is like a main function(all method are included)
     Res_all, PDs_all = generate_scores_PD(ntrial, X_train, Y_train, X_test, Y_test, bias, \
                                           muh_fun_name, muh_fun, dataset)
@@ -100,8 +100,7 @@ if __name__ == "__main__":
     
     Res_all = pd.read_csv(dataset + filler + muh_fun_name + '_' + str(ntrial) + 'Trial'  +'_Res.csv')
     PDs_all = pd.read_csv(dataset + filler + muh_fun_name + '_' + str(ntrial) + 'Trial'  +'_PDs.csv')
-## this is what?
-## use different tau??
+## function 3, calculate risk assessment probability stage: to get the probability
     results_by_tau(dataset, filler, muh_fun_name, ntrial, X_test, Y_test, \
                    PDs_all, Res_all, threshold_type, tau, sigma_eps)  
         
