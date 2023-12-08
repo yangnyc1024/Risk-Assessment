@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -30,85 +29,20 @@ from tensorflow.keras.optimizers import Adam
 from xgboost import XGBRegressor
 from matplotlib.lines import Line2D
 
-
-
-## Weighting functions for covariate shift
-
-def sort_both_by_first(v, w):
-    zipped_lists = zip(v, w)
-    sorted_zipped_lists = sorted(zipped_lists)
-    v_sorted = [element for element, _ in sorted_zipped_lists]
-    w_sorted = [element for _, element in sorted_zipped_lists]
-    
-    return [v_sorted, w_sorted]
-
-
-def get_w(x, bias):
-    return np.exp(np.log(x) @ [-bias/100, bias/100])# what is the dimensions of x?
-
-def wsample(wts, frac = 0.5):
-    
-    normalized_wts = wts/max(wts)
-    n = len(wts) ## n : length or num of weights
-    
-    indices = [] ## indices : vector containing indices of the sampled data
-    target_num_indices = int(n*frac)
-    
-    while(len(indices) < target_num_indices): ## Draw samples until have sampled ~25% of samples from D_test
-        proposed_indices = np.where(np.random.uniform(size = n) <= normalized_wts)[0].tolist()
-        ## If (set of proposed indices that may add is less than or equal to number still needed): then add all of them
-        if (len(proposed_indices) <= target_num_indices - len(indices)):
-            for j in proposed_indices:
-                indices.append(j)
-        else: ## Else: Only add the proposed indices that are needed to get to 25% of D_test
-            for j in proposed_indices:
-                if(len(indices) < target_num_indices):
-                    indices.append(j)
-    return(indices)
-
-
-def exponential_tilting_indices(x, bias = 1):
-    importance_weights = get_w(x, bias)
-    return wsample(importance_weights)
-
-## Generating data and obtainings predictive distribution results
-
-def generate_data_for_trials(ntrial, ntrain, ntotal, X_data, Y_data, bias = 0.0):
-   
-    X_by_trial = []
-    Y_by_trial = []
-    X1_by_trial = []
-    Y1_by_trial = []
-    
-    for itrial in range(ntrial):
-        
-        np.random.seed(itrial)
-        
-        train_inds = np.random.choice(ntotal, ntrain, replace = False)
-        test_inds = np.setdiff1d(np.arange(ntotal), train_inds)
-        
-        X = X_data[train_inds]
-        Y = Y_data[train_inds]
-        X1 = X_data[test_inds]
-        Y1 = Y_data[test_inds]
-
-        if (bias != 0.0):
-            biased_test_indices = exponential_tilting_indices(X1, bias = bias)
-            
-            X1 = X1[biased_test_indices] 
-            Y1 = Y1[biased_test_indices] 
-            
-        X_by_trial.append(X)
-        Y_by_trial.append(Y)
-        X1_by_trial.append(X1)
-        Y1_by_trial.append(Y1)
-
-    return X_by_trial, Y_by_trial, X1_by_trial, Y1_by_trial
-
-
 def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
-    ## need to more about this
-    
+    ## cp method, to generate upper and lower bound??
+    """
+        main function to generate conformal band
+        Input: 
+            X, Y: calibration set
+            X1: testing set
+            fit_muh_fun: what algorithm we are using
+            weights_full:??
+            bias: ??
+        Output:
+            generate the conformal prediction bands given by calibration set
+            then combine as upper, lower bound interval as data file     
+    """
     n = len(Y) ## Num training data
     n1 = X1.shape[0] ## Num test data 
 
@@ -132,7 +66,7 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
         resids_LOO[i] = Y[i] - muh_vals_LOO[0]
         muh_LOO_vals_testpoint[i] = muh_vals_LOO[1:]
     
-    abs_resids_LOO = np.abs(resids_LOO)
+    abs_resids_LOO = np.abs(resids_LOO) ## cp method?
     
     
     ###############################
@@ -270,9 +204,31 @@ def compute_PDs(X, Y, X1, fit_muh_fun, weights_full, bias):
     return Abs_Res_dict, PDs_dict
 
 
-
+    
 def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial, bias, muh_fun_name, muh_fun, dataset = 'wine'):
-    # this is to generate predict interval
+    # this is the core function to combine all trials?
+    """
+        main function to generate predict interval upper and lower bound file
+        Input: 
+            ntrial: how many trails
+            X_by_trial, Y_by_trial: training set
+            X1_by_trial, Y1_by_trial: testing set
+            bias: covariate shift index
+            muh_fun_name: method name?
+            muh_fun: method offical name?
+        Output:
+            return
+            PDs_all, 
+            for example: 
+                itrial	dataset	     muh_fun	          method	testpoint	lower0	        lower1	            lower2	            lower3	            lower4	            lower5 , until how many calibration datapints? then upper1, upper2, .....
+                0	    simulated	linear_regression	jackknife	FALSE	10.710953915387800	14.870428174056500	33.37037760657300	22.425496315934100	30.04325716823870	41.944646807551400
+            Res_all,
+            for example:
+                itrial	    dataset	        muh_fun	method	        testpoint	          value
+                0	        simulated	linear_regression	jackknife	FALSE	0.02075643722899660
+
+            
+    """
     PDs_method_names = ['jackknife', 'jackknife+_sorted', 'jackknife+', 'CV+_sorted', 'CV+', 'split', 'split_sorted',\
                         'muh_vals_testpoint','muh_split_vals_testpoint', 'weights_split_train', 'weights_JAW_train', 'weights_split_test', 'weights_JAW_test']
     Res_method_names = ['jackknife', 'CV' ,'split']
@@ -300,7 +256,7 @@ def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial
             weights_full = get_w(X_full, bias).reshape(len(X_full))
         else: 
             weights_full = np.ones(len(X_full))
-        ## what is muh_fun here?
+########for each trial calculate the predict interval
         Res, PDs = compute_PDs(X, Y, X1, muh_fun, weights_full, bias)
             
         for method in PDs_method_names:
@@ -349,29 +305,7 @@ def generate_scores_PD(ntrial, X_by_trial , Y_by_trial, X1_by_trial, Y1_by_trial
     return Res_all, PDs_all
 
 
-
-def generate_true_probs(ntrial, X1_by_trial, Y1_by_trial, PDs_data, threshold_type, tau_to_use, sigma_eps):
-    
-    prob_true = []
-
-    for itrial in tqdm.tqdm(range(ntrial)):
-        
-        x_test = X1_by_trial[itrial]
-        x1_test = x_test.T[0]
-        x2_test = x_test.T[1]
-        
-        y_test = Y1_by_trial[itrial]
-        y_pred = PDs_data[PDs_data['method'] == 'muh_vals_testpoint'][PDs_data['itrial'] == itrial].iloc[:,5:5+len(y_test)].values[0]
-        
-        diff_pred_true = y_pred - (x1_test*np.abs(np.log(np.abs(x2_test/100))) + \
-                                   x2_test*np.abs(np.log(np.abs(x1_test/100))))
-        
-        if threshold_type == 'relative':
-            tau_test_pt = np.abs(y_pred)*tau_to_use
-        else:
-            tau_test_pt = tau_to_use
-        
-        prob_true.append(scipy.stats.norm(0, sigma_eps).cdf(diff_pred_true + tau_test_pt) - \
-                    scipy.stats.norm(0, sigma_eps).cdf(diff_pred_true - tau_test_pt)) 
-        
-    return prob_true
+### function 2, training + cp method stage: to get the cp interval
+    # this is like a main function(all method are included)
+Res_all, PDs_all = generate_scores_PD(ntrial, X_train, Y_train, X_test, Y_test, bias, \
+                                          muh_fun_name, muh_fun, dataset)

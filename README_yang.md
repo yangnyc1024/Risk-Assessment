@@ -1,10 +1,5 @@
 # Risk Assessment for regression
 
-## To do list
-
-- figure out stage 2& 3 input or output
-- understand Neeraj code training input and output?
-
 
 
 ## New Design Idea
@@ -12,15 +7,13 @@
 ### src_training
 
 - design for any training function
-- input: X(feature), Y()
+- input: X
 
 
 
 ### src_cPrediction
 
-- 
-
-
+- compute_PDS(X, Y, X1)
 
 ### src_assessment
 

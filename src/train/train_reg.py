@@ -101,6 +101,29 @@ def neural_network(X, Y, X1, lr = 0.01):
     return np.array(model.predict(X1)).flatten()
 
 
-# file = './src/data/simulated_data.csv'
-# df = pd.read_csv(file)
-# print(df)
+
+## test with an example
+
+
+file = './src/data/winequality-red.csv'
+df = pd.read_csv(file)
+
+
+
+
+train_dataset = MyDataset(X[:800], y[:800])
+val_dataset = MyDataset(X[800:], y[800:])
+
+model = MyModel(n_features=10)
+trainer = Trainer(model, train_dataset, val_dataset)
+trainer.train()
+
+
+test_dataset = MyDataset(X[900:], y[900:])  
+
+tester = Tester(model, test_dataset)
+tester.test()
+
+
+
+X_train, Y_train, X_test, Y_test = generate_data_for_trials(ntrial, n_train, n_total, X_scaled, Y_scaled, bias)
